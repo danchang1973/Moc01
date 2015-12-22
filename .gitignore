@@ -55,3 +55,290 @@ __history/
 
 # Castalia statistics file
 *.stat
+
+unit sfc1;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, ExtCtrls, StdCtrls, DB, ADODB;
+
+type
+  TForm1 = class(TForm)
+    Edit1: TEdit;
+    Edit2: TEdit;
+    Label1: TLabel;
+    Label2: TLabel;
+    BTCheck: TButton;
+    Label3: TLabel;
+    Timer1: TTimer;
+    ADOConnection1: TADOConnection;
+    ADOQuery1: TADOQuery;
+    ADOQuery2: TADOQuery;
+    Edit3: TEdit;
+    Memo1: TMemo;
+    ComboBox1: TComboBox;
+    ComboBox2: TComboBox;
+    Button1: TButton;
+    Edit4: TEdit;
+    Edit5: TEdit;
+    Label4: TLabel;
+    Label5: TLabel;
+    Label6: TLabel;
+    Label7: TLabel;
+    Edit6: TEdit;
+    Button2: TButton;
+    Button3: TButton;
+    Label8: TLabel;
+    Edit7: TEdit;
+    Button4: TButton;
+    procedure Timer1Timer(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure Edit1Change(Sender: TObject);
+    procedure BTCheckClick(Sender: TObject);
+    procedure Edit3KeyPress(Sender: TObject; var Key: Char);
+    procedure Edit1KeyPress(Sender: TObject; var Key: Char);
+    procedure Button1Click(Sender: TObject);
+    procedure Button3Click(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
+    procedure Button4Click(Sender: TObject);
+    procedure Edit7KeyPress(Sender: TObject; var Key: Char);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm1.Timer1Timer(Sender: TObject);
+begin
+  Label3.caption:=datetimetostr(now);
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+
+  ComboBox1.Items.Clear;
+  ComboBox2.Items.Clear;
+
+  ADOQuery1.ACTIVE:=TRUE;
+  ADOQuery1.FIRST;
+  WHILE NOT ADOQuery1.EOF DO
+    BEGIN
+      ComboBox1.Items.Add(ADOQuery1.Fields.Fields[1].VALUE);
+      ADOQuery1.NEXT;
+    END;
+
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select * from SFCSNTC');
+  ADOQuery1.SQL.add('order by ID');
+  ADOQuery1.ACTIVE:=TRUE;
+  ADOQuery1.FIRST;
+  WHILE NOT ADOQuery1.EOF DO
+    BEGIN
+      ComboBox2.Items.Add(ADOQuery1.Fields.Fields[1].VALUE);
+      ADOQuery1.NEXT;
+    END;
+
+
+  ComboBox1.ItemIndex:=0;
+  ComboBox2.ItemIndex:=0;
+
+  ADOQuery1.ACTIVE:=FALSE;
+end;
+
+
+procedure TForm1.Edit1Change(Sender: TObject);
+begin
+  if length(edit1.text)>5 then
+    begin
+      edit2.text:='';
+      edit2.setfocus;
+    end;
+end;
+
+procedure TForm1.BTCheckClick(Sender: TObject);
+var
+  s:string;
+begin
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select * from  MOCTT');
+  ADOQuery1.sql.add('where TT001=:TT001');
+  ADOQuery1.sql.add('and TT002=:TT002');
+  ADOQuery1.Parameters.ParamByName('TT001').Value:= Edit1.Text;
+  ADOQuery1.Parameters.ParamByName('TT002').Value:= Edit3.Text;
+  ADOQuery1.OPEN;
+  IF ADOQuery1.RecordCount <> 0 THEN
+    BEGIN
+      MESSAGEBOX(FORM1.Handle,'製令單號重複!!','WARNING',MB_ICONWARNING);
+    END;
+  IF ADOQuery1.RecordCount = 0 THEN
+    BEGIN
+      ADOQuery1.close;
+      ADOQuery1.SQL.Clear;
+      ADOQuery1.SQL.add('insert into MOCTT ( TT001, TT002, TT003, TT004, TT005, TT007)');
+      ADOQuery1.sql.add('values ( :TT001, :TT002, :TT003, :TT004, :TT005, :TT007) ');
+      ADOQuery1.Parameters.ParamByName('TT001').Value:= Edit1.Text;
+      ADOQuery1.Parameters.ParamByName('TT002').Value:= Edit3.Text;
+      ADOQuery1.Parameters.ParamByName('TT003').Value:= Edit5.Text;
+      ADOQuery1.Parameters.ParamByName('TT004').Value:= Edit6.Text;
+      ADOQuery1.Parameters.ParamByName('TT005').Value:= Edit2.Text;
+      ADOQuery1.Parameters.ParamByName('TT007').Value:= Edit4.Text;
+      ADOQuery1.ExecSQL;
+      Button1.click;
+    end;
+end;
+
+procedure TForm1.Edit3KeyPress(Sender: TObject; var Key: Char);
+begin
+ if key=#13 then
+  begin
+    Button3.Click;
+{
+    if length(Edit3.text)=6 then
+      begin
+        edit1.Text:=edit3.Text;
+        edit3.Text:='';
+        edit3.SetFocus;
+      end;
+    if length(Edit3.text)=15 then
+      begin
+        edit2.Text:=edit3.Text;
+        edit3.Text:='';
+        edit3.SetFocus;
+      end;
+}
+  end ;
+end;
+
+procedure TForm1.Edit1KeyPress(Sender: TObject; var Key: Char);
+begin
+ if key=#13 then
+  begin
+    if length(Edit1.text)=6 then
+      begin
+        edit3.Text:=edit1.Text;
+      end;
+    if length(Edit1.text)=9 then
+      begin
+        Label2.Caption:='工單號';
+        edit2.Text:=edit1.Text;
+      end;
+    if length(Edit1.text)=17 then
+      begin
+        Label2.Caption:='序號';
+        edit2.Text:=edit1.Text;
+      end;
+    if length(Edit1.text)=3 then
+      begin
+        if strtoint(edit1.text)<200 then
+          begin
+            ComboBox1.ItemIndex:=strtoint(edit1.text)-101;
+          end;
+        if (strtoint(edit1.text)>200) and (strtoint(edit1.text)<300) then
+          begin
+            ComboBox2.ItemIndex:=strtoint(edit1.text)-201;
+            BTCheck.Click;
+          end;
+      end;
+    edit1.Text:='';
+    edit1.SetFocus;
+  end ;
+end;
+
+procedure TForm1.Button1Click(Sender: TObject);
+begin
+//  Edit1.Text:='';
+  Edit2.Text:='';
+//  Edit3.Text:='';
+  Edit4.Text:='';
+  Edit5.Text:='';
+  Edit6.Text:='';
+//  Edit7.Text:='';
+end;
+
+procedure TForm1.Button3Click(Sender: TObject);
+begin
+
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select * from  MOCTT');
+  ADOQuery1.sql.add('where TT001=:TT001');
+  ADOQuery1.sql.add('and TT002=:TT002');
+  ADOQuery1.Parameters.ParamByName('TT001').Value:= Edit1.Text;
+  ADOQuery1.Parameters.ParamByName('TT002').Value:= Edit3.Text;
+  ADOQuery1.OPEN;
+  IF ADOQuery1.RecordCount <> 0 THEN
+    BEGIN
+      Edit2.Text:=ADOQuery1.FieldByName('TT005').Value;
+      Edit4.Text:=ADOQuery1.FieldByName('TT007').Value;
+      Edit5.Text:=ADOQuery1.FieldByName('TT003').Value;
+      Edit6.Text:=ADOQuery1.FieldByName('TT004').Value;
+    END;
+   IF ADOQuery1.RecordCount = 0 THEN
+    BEGIN
+      Button1.Click;
+    END;
+end;
+
+procedure TForm1.Button2Click(Sender: TObject);
+begin
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('update MOCTT ');
+  ADOQuery1.sql.add('set TT003=:TT003, TT004=:TT004, TT005=:TT005, TT007=:TT007');
+  ADOQuery1.SQL.add('where TT001=:TT001');
+  ADOQuery1.SQL.add('and TT002=:TT002');
+  ADOQuery1.Parameters.ParamByName('TT001').Value:= Edit1.Text;
+  ADOQuery1.Parameters.ParamByName('TT002').Value:= Edit3.Text;
+  ADOQuery1.Parameters.ParamByName('TT003').Value:= Edit5.Text;
+  ADOQuery1.Parameters.ParamByName('TT004').Value:= Edit6.Text;
+  ADOQuery1.Parameters.ParamByName('TT005').Value:= Edit2.Text;
+  ADOQuery1.Parameters.ParamByName('TT007').Value:= Edit4.Text;
+  ADOQuery1.ExecSQL;
+//  Button1.click;
+end;
+
+procedure TForm1.Button4Click(Sender: TObject);
+begin
+
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select TT001,TT002,TT003,TT004,TT005,TT007');
+  ADOQuery1.SQL.add('from MOCTT');
+  ADOQuery1.sql.add('where TT004>=:sn');
+//  ADOQuery1.sql.add('and TT003<=:sn');
+  ADOQuery1.sql.add('order by TT003');
+  ADOQuery1.Parameters.ParamByName('sn').Value:= Edit7.Text;
+  ADOQuery1.OPEN;
+  ADOQuery1.first;
+  Edit2.Text:=inttostr(ADOQuery1.RecordCount);
+  IF ADOQuery1.RecordCount > 0 THEN
+    BEGIN
+      Edit1.Text:=ADOQuery1.FieldByName('TT001').Value;
+      Edit3.Text:=ADOQuery1.FieldByName('TT002').Value;
+      Edit2.Text:=ADOQuery1.FieldByName('TT005').Value;
+      Edit4.Text:=ADOQuery1.FieldByName('TT007').Value;
+      Edit5.Text:=ADOQuery1.FieldByName('TT003').Value;
+      Edit6.Text:=ADOQuery1.FieldByName('TT004').Value;
+    END;
+end;
+
+procedure TForm1.Edit7KeyPress(Sender: TObject; var Key: Char);
+begin
+ if key=#13 then
+  begin
+    Button4.Click;
+  end;
+end;
+
+end.
